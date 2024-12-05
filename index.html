@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Stencil Embedded Form custom picker example</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+      <iframe 
+        id="childFrame" 
+        src="https://app.usestencil.com/forms/34aacb1e-a7e4-4b4d-bb64-2bffc3c930a4/3888c7fc-2daf-456c-821e-698579cba00c?embed=true" 
+        style="width:100%; height:800px; border:1px solid black;">
+      </iframe>
+      <div id="chooseImageModal" class="relative z-10 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-gray-500/75 transition-opacity" aria-hidden="true"></div>
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+              <div>
+                <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-green-100">
+                  <svg class="size-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" data-slot="icon">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-5">
+                  <h3 class="text-base font-semibold text-gray-900" id="modal-title">Example Custom Image Picker</h3>
+                  <div class="mt-2">
+                    <p class="text-sm text-gray-500">This modal (custom picker) lives in your own app, it gets triggered by Stencil form.</p>
+                    <p class="text-sm text-gray-500">You can implement your own logic here to retrieve the image based on EAN barcode, etc.</p>
+                    <p class="text-sm text-gray-500">Once the image is selected, you can send the image details to the form. (In this example, clicking the button will send a hardcoded image)</p>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-5 sm:mt-6">
+                <button id="sendMessage" type="button" class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Confirm image</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="messageLog">
+          <strong>Message Log:</strong><br>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Get references to DOM elements
+      const sendButton = document.getElementById('sendMessage');
+      const messageLog = document.getElementById('messageLog');
+      const childFrame = document.getElementById('childFrame');
+      const modal = document.getElementById('chooseImageModal')
+
+      // Event listener for sending messages
+      sendButton.addEventListener('click', () => {
+          const message = {
+              namespace: 'stencil',
+              action: 'end_choose_image',
+              data: {
+                url: "https://png.pngtree.com/png-clipart/20221013/ourmid/pngtree-simulation-cosmetics-product-sample-skin-care-essential-oil-png-image_6158599.png",
+                layerId: window.stencil.layerId,
+                layer: window.stencil.layer
+              }
+          };
+
+          // Send message to iframe
+          childFrame.contentWindow.postMessage(message, 'https://app.usestencil.com');
+          // Toggle the modal
+          modal.classList.toggle("hidden")
+      });
+
+      // Event listener for receiving messages
+      window.addEventListener('message', (event) => {
+          // Always check the origin for security
+          if (event.origin !== 'https://app.usestencil.com') return;
+
+          modal.classList.toggle("hidden")
+
+          // In production application, you should capture the data sent from the form and use it to fill in some required fields
+          // when sending back the image to the form so the form knows which field needs to be updated.
+          window.stencil = {}
+          window.stencil.layerId = event.data.data.layerId
+          window.stencil.layer = event.data.data.layer
+
+          // Log received message
+          const logEntry = document.createElement('div');
+          logEntry.textContent = `Received from iframe: ${JSON.stringify(event.data)}`;
+          messageLog.appendChild(logEntry);
+      }, false);
+    </script>
+  </body>
+</html>
